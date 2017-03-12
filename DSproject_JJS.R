@@ -27,9 +27,9 @@ library(futile.logger)
 # Load functions
 trim.trailing <- function (x) sub("\\s+$", "", x)
 
-load_my_csv <- function(filename, headr) {
+load_my_csv <- function(filename) {
   stopifnot(!is.null(filename))
-  data = read.csv(filename, header = headr)
+  data = read.csv(filename)
   flog.info("Data has loaded from: %s", filename, name="fp9")
   return(data)
 }
@@ -47,7 +47,7 @@ if(interactive()){
   setwd("~/code/uw_dsci/DS350/Homework/Project")
   
   # Setup Logging
-  log_file_name = "FinProject_log.log"
+  log_file_name = "final_proj_log.log"
   flog.threshold(INFO, name = "fp9")
   flog.appender(appender.file(log_file_name), name="fp9")
   flog.info("Script created by: John Senft", name = "fp9")
@@ -57,34 +57,31 @@ if(interactive()){
   ## --------------------------- Process ufo sighting data from NUFORC ------------------------------
   
   # Read in kaggle UFO database
-  ufo_db <- load_my_csv("src/scrubbed.csv", FALSE)
-  #ufo_db <- read.csv("src/scrubbed.csv", stringsAsFactors=FALSE)
+  ufo_db <- load_my_csv("src/scrubbed.csv")
   state_abv <- c("al", "ak", "az", "ar", "ca", "co", "ct", "de", "fl", "ga", "hi", "id", "il", "in", "ia", "ks",
                  "ky", "la", "me", "md", "ma", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nh", "nj", "nm", "ny", "nc",
                  "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tx", "tn", "ut", "vt", "va", "wa", "wv", "wi",
                  "wy")
   ufo_db_us <- filter(ufo_db, state %in% state_abv)
-  ufo_table <- data.table(ufo_db_us)
+  ufo_db_us <- data.table(ufo_db_us)
   
   # Find counts per state in table, add state names for mapping using external excel file
-  state_counts <- ufo_table[, .(count = .N), by = state]
+  state_counts <- ufo_db_us[, .(count = .N), by = state]
   state_counts$state <- toupper(state_counts$state)
   state_counts$Abbreviation <- state_counts$state
   state_counts$state <- NULL
-  state_names <- load_my_csv("src/states.csv", TRUE)
-  #state_names <- read.csv("src/states.csv", header = TRUE, stringsAsFactors = FALSE)
-  state_names <- data.table(state_names)
-  states <- merge(state_counts, state_names, by="Abbreviation")
-  states$State <- tolower(states$State)
-  states$Abbreviation <- NULL
-  states$region <- states$State
-  states$State <- NULL
-  barplot(states$count, las = 2, names.arg = states$region, col = c(2, 3),
+  state_names <- load_my_csv("src/states.csv")
+  state_counts <- merge(state_counts, state_names, by="Abbreviation")
+  state_counts$State <- tolower(state_counts$State)
+  state_counts$Abbreviation <- NULL
+  state_counts$region <- state_counts$State
+  state_counts$State <- NULL
+  barplot(state_counts$count, las = 2, names.arg = state_counts$region, col = c(2, 3),
           ylab = "Number of Sightings")
   
   # Plot map of states lit up by sightings per state
   us_map <- map_data("state")
-  counts_map <- merge(us_map, states, by="region")
+  counts_map <- merge(us_map, state_counts, by="region")
   gg <- ggplot()
   gg <- gg + geom_map(data=us_map, map=us_map,
                       aes(x=long, y=lat, map_id=region),
@@ -99,11 +96,10 @@ if(interactive()){
   gg + scale_y_continuous(breaks=c()) + scale_x_continuous(breaks=c()) + theme(panel.border = element_blank())
   
   # Read in population data and clean up data
-  excel_sheets("src/12s0016.xls")
-  pop2010 <- read_excel("src/12s0016.xls", sheet = 1, skip = 6, col_names = FALSE)
-  pop2010 <- data.table(pop2010)
+  pop2010_totals <- read_excel("src/12s0016.xls", sheet = 1, skip = 6, col_names = FALSE)
+  pop2010_totals <- data.table(pop2010_totals)
   cols <- c("region", "population")
-  pop2010_totals <- pop2010[, .(X1, X2 * 1000)]
+  pop2010_totals <- pop2010_totals[, .(X1, X2 * 1000)]
   names(pop2010_totals) <- cols
   pop2010_totals <- pop2010_totals[complete.cases(pop2010_totals),]
   pop2010_totals <- pop2010_totals[c(6:13, 15:56)] # Remove all but states
@@ -111,9 +107,9 @@ if(interactive()){
   pop2010_totals$region <- tolower(pop2010_totals$region)
   
   # Want sightings as a percentage of state population since 2010
-  ufo_table$datetime <- as.Date(ufo_table$datetime, format="%m/%d/%Y")
-  ufo_table_2010 <- subset(ufo_table, ufo_table$datetime >= "2010-01-01")
-  state_counts_2010 <- ufo_table_2010[, .(count = .N), by = state]
+  ufo_db_us$datetime <- as.Date(ufo_db_us$datetime, format="%m/%d/%Y")
+  ufo_db_us_2010 <- subset(ufo_db_us, ufo_db_us$datetime >= "2010-01-01")
+  state_counts_2010 <- ufo_db_us_2010[, .(count = .N), by = state]
   state_counts_2010$state <- toupper(state_counts_2010$state)
   state_counts_2010$Abbreviation <- state_counts_2010$state
   state_counts_2010$state <- NULL
@@ -124,9 +120,25 @@ if(interactive()){
   states_2010$State <- NULL
   ufo_pop_merge <- merge(states_2010, pop2010_totals, by="region")
   ufo_pctpop_2010 <- ufo_pop_merge[, .(pct_pop = count/population * 100), by = region]
+  ##--------------------------------------------------------------------------------------
+  
+  # Want sightings as a percentage of state population since 2010
+  ufo_db_us$datetime <- as.Date(ufo_db_us$datetime, format="%m/%d/%Y")
+  ufo_db_us_2010 <- subset(ufo_db_us, ufo_db_us$datetime >= "2010-01-01")
+  ufo_db_us_2010 <- ufo_db_us_2010[, .(count = .N), by = state]
+  ufo_db_us_2010$state <- toupper(ufo_db_us_2010$state)
+  ufo_db_us_2010$Abbreviation <- ufo_db_us_2010$state
+  ufo_db_us_2010$state <- NULL
+  ufo_db_us_2010 <- merge(ufo_db_us_2010, state_names, by="Abbreviation")
+  ufo_db_us_2010$State <- tolower(ufo_db_us_2010$State)
+  ufo_db_us_2010$Abbreviation <- NULL
+  ufo_db_us_2010$region <- ufo_db_us_2010$State
+  ufo_db_us_2010$State <- NULL
+  ufo_pop_merge <- merge(ufo_db_us_2010, pop2010_totals, by="region")
+  ufo_pop_merge <- ufo_pop_merge[, .(pct_pop = count/population * 100), by = region]
   
   # Map sightings as a percentage of state population since 2010
-  pctpop_2010_map <- merge(us_map, ufo_pctpop_2010, by="region")
+  pctpop_2010_map <- merge(us_map, ufo_pop_merge, by="region")
   gg2010 <- ggplot()
   gg2010 <- gg2010 + geom_map(data=us_map, map=us_map,
                       aes(x=long, y=lat, map_id=region),
@@ -145,13 +157,13 @@ if(interactive()){
   ## -------------------------------- Process twitter data ----------------------------------------
   
   # Setup Twitter OAuth
-  tw_creds <- read.csv('creds/tw_creds_JJS.csv', stringsAsFactors = FALSE)
+  tw_creds <- load_my_csv('creds/tw_creds_JJS.csv')
   TWITTER_ACCESS_TOKEN <- tw_creds$TWITTER_ACCESS_TOKEN
   TWITTER_ACCESS_SECRET <- tw_creds$TWITTER_ACCESS_SECRET
   setup_twitter_oauth(TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_SECRET)
   
   # Grab new tweets and append to aggregate, clean up
-  tw_df_ufo_more <- add_tweets('2017-03-08')
+  tw_df_ufo_more <- add_tweets('2017-03-11')
   tw_df_ufo_more$text <- sapply(tw_df_ufo_more$text,function(row) iconv(row, "latin1", "ASCII", sub=""))
   tw_full_df <- rbind(tw_full_df, tw_df_ufo_more)
   tw_full_df <- subset(tw_full_df, !duplicated(tw_full_df$text))
@@ -236,7 +248,6 @@ if(interactive()){
   
   # Create document term matrix, convert to data frame
   dtm <- DocumentTermMatrix(tw_full_corpus)
-  
   tw_corpus_matrix = as.matrix(dtm)
   tw_words_df = as.data.frame(tw_corpus_matrix)
   
@@ -264,28 +275,17 @@ if(interactive()){
   }
   
   # Need to add back in states that have 0 tweet count
-  x <- 1
-  test <- words_states
-  for (region in seq(states_2010$region)){
-    if (!isTRUE(all.equal(words_states$region, states_2010$region))){
-      test = cbind(test, states_2010$region)
-    }
-  }
-  
-  missing_states = data.frame('region' = c("new hampshire", "north carolina", 
+  missing_states = data.frame('region'= c("new hampshire", "north carolina", 
                                            "south dakota", "new jersey", "rhode island"),
-                              'count' = rep(0, 5))
-  test = rbind(test, missing_states) 
+                              'count'= rep(0, 5))
+  words_states = rbind(words_states, missing_states) 
   
   # Want to merge in ratio of sightings from total sightings for each state
-  sighting_count <- sum(ufo_pop_merge$count)
-  ufo_pct_count <- ufo_pop_merge[, .(pct_count = count/sighting_count), by = region]
+  sighting_count <- sum(ufo_db_us_2010$count)
+  ufo_pct_count <- ufo_db_us_2010[, .(pct_count = count/sighting_count), by = region]
   words_states <- merge(words_states, ufo_pct_count, by="region")
-  #words_states <- words_states[, .(count, population, tw_pct_pop = count/population * 100), by = region]
-  #words_states <- merge(words_states, ufo_pctpop_2010, by="region")
-  barplot(words_states$count, las = 2, names.arg = words_states$state, col = c(2, 3),
+  barplot(words_states$count, las = 2, names.arg = words_states$region, col = c(2, 3),
           ylab = "Number of Sightings")
-  
   
   # Look at chi-sq stats
   # H0: NUFORC sightings are a pridictor of twitter ufo posts.
@@ -293,7 +293,7 @@ if(interactive()){
   ufo_cs_test <- chisq.test(words_states$count, p = words_states$pct_count)
   
   # Log results
-  flog.info("blah blah blah:", ci_norm, capture=T, name="fp9")
+  flog.info("Chi-Squared test results are as follows:", ufo_cs_test, capture=T, name="fp9")
   
 }
 ##--------------------------------End of Script----------------------------------------

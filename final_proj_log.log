@@ -1,0 +1,16 @@
+INFO [2017-03-12 14:02:46] Script created by: John Senft
+INFO [2017-03-12 14:02:58] Data has loaded from: src/scrubbed.csv
+INFO [2017-03-12 14:05:12] Data has loaded from: src/scrubbed.csv
+INFO [2017-03-12 14:06:18] Data has loaded from: src/states.csv
+INFO [2017-03-12 15:14:56] Data has loaded from: creds/tw_creds_JJS.csv
+INFO [2017-03-12 15:15:21] Data has loaded from: creds/tw_creds_JJS.csv
+INFO [2017-03-12 15:44:29] Data has loaded from: src/scrubbed.csv
+INFO [2017-03-12 15:45:48] Data has loaded from: creds/tw_creds_JJS.csv
+INFO [2017-03-12 16:33:51] Chi-Squared test results are as follows:
+
+
+	Chi-squared test for given probabilities
+
+data:  words_states$count
+X-squared = 6505.7, df = 49, p-value < 2.2e-16
+

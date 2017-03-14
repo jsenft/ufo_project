@@ -14,5 +14,4 @@
 *.gz
 *.dll
 tw_creds_JJS.*
-*.RData
 *.pages

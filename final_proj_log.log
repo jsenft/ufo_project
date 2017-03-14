@@ -14,3 +14,12 @@ INFO [2017-03-12 16:33:51] Chi-Squared test results are as follows:
 data:  words_states$count
 X-squared = 6505.7, df = 49, p-value < 2.2e-16
 
+INFO [2017-03-13 20:41:28] UPDATED Chi-Squared test results are as follows:
+
+
+	Chi-squared test for given probabilities
+
+data:  words_states$count
+X-squared = 5726.2, df = 49, p-value < 2.2e-16
+
+INFO [2017-03-13 21:40:45] Unit test passed!

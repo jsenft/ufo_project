@@ -1,9 +1,9 @@
 # UFO Sightings Class Project (DS350)
 
 ## To Run
-To run the project in R, open: DSproject_JJS.R
-Final version of workspace can be loaded with: ufo_final.RData
-Source files are in: /src/
+- To run the project in R, open: DSproject_JJS.R
+- Final version of workspace can be loaded with: ufo_final.RData
+- Source files are in: /src/
 
 ## Attributions
 This project uses the following:

@@ -15,3 +15,5 @@
 *.dll
 tw_creds_JJS.*
 *.pages
+*.DS_Store
+*.gitignore

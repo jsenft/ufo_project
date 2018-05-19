@@ -1,4 +1,5 @@
 # UFO Sightings EDA Project (DS350)
+See "Project_writeup" files in Word or Pages format to see the motivations and results of this effort.
 
 ## To Run
 - To run the project in R, open: DSproject_JJS.R

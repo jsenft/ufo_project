@@ -1,4 +1,4 @@
-# UFO Sightings Class Project (DS350)
+# UFO Sightings EDA Project (DS350)
 
 ## To Run
 - To run the project in R, open: DSproject_JJS.R
